@@ -31,7 +31,7 @@ function App() {
     setHistoryLoading(true);
     setHistoryError('');
     try {
-      const response = await fetch("http://jwtback.vercel.app/api/history");
+      const response = await fetch("https://jwtback.vercel.app/api/history");
       const data = await response.json();
       if (response.ok) {
         setHistory(data);
@@ -61,7 +61,7 @@ function App() {
       return;
     }
     try {
-      const response = await fetch("http://jwtback.vercel.app/api/analyze", {
+      const response = await fetch("https://jwtback.vercel.app/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jwt, secret }),
@@ -95,7 +95,7 @@ function App() {
     }
     try {
       const response = await fetch(
-        "http://jwtback.vercel.app/api/generate",
+        "https://jwtback.vercel.app/api/generate",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
