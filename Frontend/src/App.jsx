@@ -31,7 +31,9 @@ function App() {
     setHistoryLoading(true);
     setHistoryError('');
     try {
-      const response = await fetch('http://localhost:5000/api/history');
+      const response = await fetch(
+        "https://https://jwt-kappa-dusky.vercel.app/api/history"
+      );
       const data = await response.json();
       if (response.ok) {
         setHistory(data);
@@ -61,11 +63,14 @@ function App() {
       return;
     }
     try {
-      const response = await fetch('http://localhost:5000/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jwt, secret }),
-      });
+      const response = await fetch(
+        "https://jwt-kappa-dusky.vercel.app/api/analyze",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jwt, secret }),
+        }
+      );
       const data = await response.json();
       setLoading(false);
       if (response.ok) {
@@ -94,16 +99,19 @@ function App() {
       return;
     }
     try {
-      const response = await fetch('http://localhost:5000/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          header: headerObj,
-          payload: payloadObj,
-          secret: secretGen,
-          algorithm: algorithmGen
-        }),
-      });
+      const response = await fetch(
+        "https://jwt-kappa-dusky.vercel.app/api/generate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            header: headerObj,
+            payload: payloadObj,
+            secret: secretGen,
+            algorithm: algorithmGen,
+          }),
+        }
+      );
       const data = await response.json();
       setLoadingGen(false);
       if (response.ok) {
