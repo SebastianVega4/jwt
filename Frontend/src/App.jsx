@@ -137,6 +137,36 @@ function App() {
       showToastNotification("Header y/o payload JSON mal formados.", "error");
       return;
     }
+    // --- Validación de longitud de clave secreta para algoritmos HS
+    if (algorithmGen.startsWith("HS")) {
+      let requiredLength;
+      switch (algorithmGen) {
+        case "HS256":
+          requiredLength = 32;
+          break;
+        case "HS384":
+          requiredLength = 48;
+          break;
+        case "HS512":
+          requiredLength = 64;
+          break;
+        default:
+          requiredLength = 0; // Should not happen with valid_algorithms
+      }
+
+      if (secretGen.length !== requiredLength) {
+        setErrorGen(
+          `La clave secreta para ${algorithmGen} debe ser de ${requiredLength} caracteres. Actualmente tiene ${secretGen.length}.`
+        );
+        setLoadingGen(false);
+        showToastNotification(
+          `La clave secreta para ${algorithmGen} debe ser de ${requiredLength} caracteres.`,
+          "error"
+        );
+        return;
+      }
+    }
+
     try {
       const response = await fetch("https://jwtback.vercel.app/api/generate", {
         method: "POST",
@@ -411,6 +441,7 @@ function App() {
           onChange={(e) => setAlgorithmGen(e.target.value)}>
           <option value="HS256">HS256</option>
           <option value="HS384">HS384</option>
+          <option value="HS512">HS512</option>
         </select>
         <button
           onClick={generateJWT}
