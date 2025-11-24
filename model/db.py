@@ -2,21 +2,19 @@ from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from datetime import datetime
 import os
-from bson.objectid import ObjectId # Import ObjectId
+from bson.objectid import ObjectId
 
-# MongoDB connection string from the user
 MONGO_URI = "mongodb+srv://johanvega01_db_user:CmMw8mO4ow2ehjh5@cluster0.pyavozq.mongodb.net/?appName=Cluster0"
 
 client = None
 db = None
 
 def init_db():
-    """Initializes the MongoDB connection."""
     global client, db
     try:
         client = MongoClient(MONGO_URI)
-        client.admin.command('ping') # Test connection
-        db = client.jwt_history # database name
+        client.admin.command('ping') # Test
+        db = client.jwt_history # database
         print("MongoDB connection successful!")
         print(f"DB object after successful connection: {db}")
     except ConnectionFailure as e:
@@ -26,10 +24,9 @@ def init_db():
         print(f"DB object after failed connection: {db}")
 
 def save_result(jwt_string, analysis_result):
-    """Saves a JWT analysis result to the database."""
     if db is not None:
         try:
-            history_collection = db.history # collection name
+            history_collection = db.history # collection
             record = {
                 "jwt_string": jwt_string,
                 "analysis_result": analysis_result,
@@ -47,7 +44,6 @@ def save_result(jwt_string, analysis_result):
         return False
 
 def get_history():
-    """Retrieves all JWT analysis history from the database."""
     if db is not None:
         try:
             history_collection = db.history
@@ -67,7 +63,6 @@ def get_history():
         return []
 
 def delete_history_record(record_id):
-    """Deletes a single JWT analysis record by its ID."""
     if db is not None:
         try:
             history_collection = db.history
@@ -85,4 +80,4 @@ def delete_history_record(record_id):
         print("Database not initialized. Cannot delete record.")
         return False
 
-init_db() # Initialize DB when module is imported
+init_db() # Initialize Db

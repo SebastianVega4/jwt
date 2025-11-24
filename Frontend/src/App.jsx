@@ -296,7 +296,7 @@ function App() {
             </div>
             <div style={{ marginBottom: 10 }}>
               <strong>Árbol de derivación:</strong>
-              <pre>{result.arbol_derivacion}</pre>
+              <pre style={{ whiteSpace: "pre-wrap" }}>{result.arbol_derivacion}</pre>
             </div>
             <div style={{ marginBottom: 10 }}>
               <strong>Claims en payload:</strong>

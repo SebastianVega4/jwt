@@ -17,16 +17,12 @@ from bson.errors import InvalidId
 
 app = Flask(__name__)
 
-# 1. Configuración básica de CORS (permite todo)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuración DB
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://johanvega01_db_user:CmMw8mO4ow2ehjh5 @cluster0.pyavozq.mongodb.net/?appName=Cluster0')
 
-# --- SOLUCIÓN DEFINITIVA CORS ---
 
-# 2. Interceptar TODAS las peticiones OPTIONS antes de que lleguen a las rutas
-# Esto evita el error 404 en el Preflight
 @app.before_request
 def handle_preflight():
     if request.method == "OPTIONS":
@@ -36,7 +32,6 @@ def handle_preflight():
         response.headers.add("Access-Control-Allow-Methods", "*")
         return response
 
-# 3. Inyectar encabezados CORS en TODAS las respuestas (incluso errores 404 o 500)
 @app.after_request
 def add_cors_headers(response):
     response.headers.add("Access-Control-Allow-Origin", "*")
@@ -44,7 +39,6 @@ def add_cors_headers(response):
     response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
     return response
 
-# --------------------------------
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_jwt():
