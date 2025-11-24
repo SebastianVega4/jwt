@@ -12,7 +12,7 @@ import os
 from bson.errors import InvalidId # Import InvalidId
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "https://jwtfrontend-drab.vercel.app", "methods": ["GET", "POST", "DELETE", "OPTIONS"]}}, supports_credentials=True)
 
 # Configuración para producción
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://johanvega01_db_user:CmMw8mO4ow2ehjh5@cluster0.pyavozq.mongodb.net/?appName=Cluster0')

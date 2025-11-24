@@ -28,6 +28,27 @@ function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
 
+  // --- Estado para Modal de confirmación
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalAction, setModalAction] = useState(null);
+
+  // --- Estado para Toast (notificaciones)
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("success"); // 'success' or 'error'
+  const [showToast, setShowToast] = useState(false);
+
+  // --- Función para mostrar toast
+  const showToastNotification = (message, type = "success") => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+      setToastMessage("");
+    }, 3000); // Ocultar toast después de 3 segundos
+  };
+
   // --- Función para cargar historial
   const fetchHistory = async () => {
     setHistoryLoading(true);
@@ -41,10 +62,18 @@ function App() {
         setHistory(data);
       } else {
         setHistoryError(data.error || "Error al cargar el historial");
+        showToastNotification(
+          data.error || "Error al cargar el historial",
+          "error"
+        );
       }
     } catch (e) {
       setHistoryError(
         "No se pudo conectar con el backend para cargar el historial."
+      );
+      showToastNotification(
+        "No se pudo conectar con el backend para cargar el historial.",
+        "error"
       );
     } finally {
       setHistoryLoading(false);
@@ -55,11 +84,16 @@ function App() {
     fetchHistory();
   }, []); // Empty dependency array means this runs once on mount
 
-  // --- Función para eliminar un registro del historial
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este registro?")) {
-      return;
-    }
+  // --- Función para eliminar un registro del historial (manejo de modal)
+  const handleDeleteClick = (id) => {
+    setModalMessage("¿Estás seguro de que quieres eliminar este registro?");
+    setModalAction(() => () => confirmDelete(id)); // Envuelve la acción de eliminación
+    setShowModal(true);
+  };
+
+  // --- Función que realmente elimina el registro
+  const confirmDelete = async (id) => {
+    setShowModal(false); // Cierra el modal
     try {
       const response = await fetch(
         `https://jwtback.vercel.app/api/history/${id}`,
@@ -68,13 +102,20 @@ function App() {
         }
       );
       if (response.ok) {
+        showToastNotification("Registro eliminado correctamente.");
         fetchHistory(); // Vuelve a cargar el historial para actualizar la UI
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Error al eliminar el registro.");
+        showToastNotification(
+          errorData.error || "Error al eliminar el registro.",
+          "error"
+        );
       }
     } catch (e) {
-      alert("No se pudo conectar con el backend para eliminar el registro.");
+      showToastNotification(
+        "No se pudo conectar con el backend para eliminar el registro.",
+        "error"
+      );
     }
   };
 
@@ -101,12 +142,21 @@ function App() {
       setLoading(false);
       if (response.ok) {
         setResult(data);
+        showToastNotification("Análisis de JWT completado.");
       } else {
         setError(data.error || "Error desconocido");
+        showToastNotification(
+          data.error || "Error durante el análisis.",
+          "error"
+        );
       }
     } catch (e) {
       setLoading(false);
       setError("No se pudo conectar con el backend.");
+      showToastNotification(
+        "No se pudo conectar con el backend para analizar el JWT.",
+        "error"
+      );
     }
   };
 
@@ -122,6 +172,7 @@ function App() {
     } catch (e) {
       setErrorGen("Header y/o payload JSON mal formados");
       setLoadingGen(false);
+      showToastNotification("Header y/o payload JSON mal formados.", "error");
       return;
     }
     try {
@@ -142,12 +193,21 @@ function App() {
       setLoadingGen(false);
       if (response.ok) {
         setJwtGen(data.jwt);
+        showToastNotification("JWT generado correctamente.");
       } else {
         setErrorGen(data.error || "Error desconocido");
+        showToastNotification(
+          data.error || "Error durante la generación de JWT.",
+          "error"
+        );
       }
     } catch (e) {
       setLoadingGen(false);
       setErrorGen("No se pudo conectar con el backend.");
+      showToastNotification(
+        "No se pudo conectar con el backend para generar el JWT.",
+        "error"
+      );
     }
   };
 
@@ -161,7 +221,87 @@ function App() {
         boxShadow: "0 4px 16px #ccc",
         padding: "32px",
         fontFamily: "Segoe UI",
+        position: "relative", // Para posicionar el toast
       }}>
+      {/* Toast Notification */}
+      {showToast && (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            background: toastType === "success" ? "#4CAF50" : "#f44336",
+            color: "white",
+            padding: "10px 20px",
+            borderRadius: "5px",
+            zIndex: 1000,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+            opacity: showToast ? 1 : 0,
+            transition: "opacity 0.5s ease-in-out",
+          }}>
+          {toastMessage}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+          }}>
+          <div
+            style={{
+              background: "white",
+              padding: "30px",
+              borderRadius: "8px",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+              textAlign: "center",
+              minWidth: "300px",
+            }}>
+            <p style={{ fontSize: "18px", marginBottom: "20px" }}>
+              {modalMessage}
+            </p>
+            <button
+              onClick={() => {
+                modalAction();
+                setShowModal(false);
+              }}
+              style={{
+                backgroundColor: "#e74c3c",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "5px",
+                cursor: "pointer",
+                marginRight: "10px",
+              }}>
+              Confirmar
+            </button>
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                backgroundColor: "#ccc",
+                color: "black",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1
         style={{
           textAlign: "center",
@@ -428,7 +568,10 @@ function App() {
               {jwtGen}
             </div>
             <button
-              onClick={() => navigator.clipboard.writeText(jwtGen)}
+              onClick={() => {
+                navigator.clipboard.writeText(jwtGen);
+                showToastNotification("JWT copiado al portapapeles.");
+              }}
               style={{
                 fontSize: "13px",
                 background: "#313cff",
@@ -441,7 +584,10 @@ function App() {
               Copiar JWT
             </button>
             <button
-              onClick={() => setJwt(jwtGen)}
+              onClick={() => {
+                setJwt(jwtGen);
+                showToastNotification("JWT movido a la sección de análisis.");
+              }}
               style={{
                 fontSize: "13px",
                 background: "#0e8f18",
@@ -500,14 +646,14 @@ function App() {
                   Análisis #{history.length - index} -{" "}
                   {new Date(record.timestamp).toLocaleString()}
                   <button
-                    onClick={() => handleDelete(record._id)}
+                    onClick={() => handleDeleteClick(record._id)}
                     style={{
                       fontSize: "12px",
                       background: "#e74c3c",
                       color: "#fff",
                       border: "none",
-                      borderRadius: 4,
                       padding: "4px 8px",
+                      borderRadius: 4,
                       marginLeft: "10px",
                       cursor: "pointer",
                     }}>
@@ -583,4 +729,3 @@ function App() {
 }
 
 export default App;
-
