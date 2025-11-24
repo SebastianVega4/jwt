@@ -14,7 +14,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuración para producción
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://johanvega01_db_user:CmMw8mO4ow2ehjh5@cluster0.pyavozq.mongodb.net/?appName=Cluster0')
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_jwt():
