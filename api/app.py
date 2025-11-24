@@ -103,8 +103,11 @@ def get_analysis_history():
     except Exception as e:
         return jsonify({'error': f'Error obteniendo historial: {str(e)}'}), 500
 
-@app.route('/api/history/<record_id>', methods=['DELETE'])
+@app.route('/api/history/<record_id>', methods=['DELETE', 'OPTIONS'])
 def delete_analysis_history(record_id):
+    if request.method == 'OPTIONS':
+        # Respond to preflight request
+        return '', 200
     try:
         if delete_history_record(record_id):
             return jsonify({'message': 'Registro de historial eliminado correctamente'}), 200
