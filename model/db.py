@@ -64,3 +64,5 @@ def get_history():
         print(f"Debug: db is None in get_history. Current db: {db}")
         print("Database not initialized. Cannot retrieve history.")
         return []
+
+init_db() # Initialize DB when module is imported
