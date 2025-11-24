@@ -28,10 +28,7 @@ function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
 
-  // --- Estado para Modal de confirmación
-  const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
-  const [modalAction, setModalAction] = useState(null);
+
 
   // --- Estado para Toast (notificaciones)
   const [toastMessage, setToastMessage] = useState("");
@@ -54,9 +51,7 @@ function App() {
     setHistoryLoading(true);
     setHistoryError("");
     try {
-      const response = await fetch(
-        "https://jwtback.vercel.app/api/history"
-      );
+      const response = await fetch("http://127.0.0.1:5000/api/history");
       const data = await response.json();
       if (response.ok) {
         setHistory(data);
@@ -84,40 +79,7 @@ function App() {
     fetchHistory();
   }, []); // Empty dependency array means this runs once on mount
 
-  // --- Función para eliminar un registro del historial (manejo de modal)
-  const handleDeleteClick = (id) => {
-    setModalMessage("¿Estás seguro de que quieres eliminar este registro?");
-    setModalAction(() => () => confirmDelete(id)); // Envuelve la acción de eliminación
-    setShowModal(true);
-  };
 
-  // --- Función que realmente elimina el registro
-  const confirmDelete = async (id) => {
-    setShowModal(false); // Cierra el modal
-    try {
-      const response = await fetch(
-        `https://jwtback.vercel.app/api/history/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (response.ok) {
-        showToastNotification("Registro eliminado correctamente.");
-        fetchHistory(); // Vuelve a cargar el historial para actualizar la UI
-      } else {
-        const errorData = await response.json();
-        showToastNotification(
-          errorData.error || "Error al eliminar el registro.",
-          "error"
-        );
-      }
-    } catch (e) {
-      showToastNotification(
-        "No se pudo conectar con el backend para eliminar el registro.",
-        "error"
-      );
-    }
-  };
 
   // --- Función de análisis
   const analyzeJWT = async () => {
@@ -131,7 +93,7 @@ function App() {
     }
     try {
       const response = await fetch(
-        "https://jwtback.vercel.app/api/analyze",
+        "http://127.0.0.1:5000/api/analyze",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -177,7 +139,7 @@ function App() {
     }
     try {
       const response = await fetch(
-        "https://jwtback.vercel.app/api/generate",
+        "http://127.0.0.1:5000/api/generate",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -243,64 +205,7 @@ function App() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      {showModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 999,
-          }}>
-          <div
-            style={{
-              background: "white",
-              padding: "30px",
-              borderRadius: "8px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
-              textAlign: "center",
-              minWidth: "300px",
-            }}>
-            <p style={{ fontSize: "18px", marginBottom: "20px" }}>
-              {modalMessage}
-            </p>
-            <button
-              onClick={() => {
-                modalAction();
-                setShowModal(false);
-              }}
-              style={{
-                backgroundColor: "#e74c3c",
-                color: "white",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "5px",
-                cursor: "pointer",
-                marginRight: "10px",
-              }}>
-              Confirmar
-            </button>
-            <button
-              onClick={() => setShowModal(false)}
-              style={{
-                backgroundColor: "#ccc",
-                color: "black",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "5px",
-                cursor: "pointer",
-              }}>
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
+
 
       <h1
         style={{
@@ -645,20 +550,7 @@ function App() {
                   style={{ fontSize: "18px", color: "#555", marginBottom: 10 }}>
                   Análisis #{history.length - index} -{" "}
                   {new Date(record.timestamp).toLocaleString()}
-                  <button
-                    onClick={() => handleDeleteClick(record._id)}
-                    style={{
-                      fontSize: "12px",
-                      background: "#e74c3c",
-                      color: "#fff",
-                      border: "none",
-                      padding: "4px 8px",
-                      borderRadius: 4,
-                      marginLeft: "10px",
-                      cursor: "pointer",
-                    }}>
-                    Eliminar
-                  </button>
+
                 </h3>
                 <div style={{ marginBottom: 5 }}>
                   <strong>JWT Analizado:</strong>{" "}

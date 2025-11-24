@@ -1,4 +1,9 @@
-from flask import Flask, request, jsonify
+import sys
+import os
+# Ajuste de path para que encuentre tus modelos
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 from model.parser import JWTParser
 from model.lexer import JWTlexer
@@ -6,16 +11,40 @@ from model.semantic import JWTSemanticAnalyzer
 from model.automata import JWTStructureDFA
 from model.crypto import JWTVerifier
 from model.utils import show_tree
-from model.db import init_db, save_result, get_history, delete_history_record # Import delete_history_record
-import jwt  # Asegurar que se importa
-import os
-from bson.errors import InvalidId # Import InvalidId
+from model.db import init_db, save_result, get_history
+import jwt
+from bson.errors import InvalidId
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "DELETE", "OPTIONS"]}}, supports_credentials=True)
 
-# Configuración para producción
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://johanvega01_db_user:CmMw8mO4ow2ehjh5@cluster0.pyavozq.mongodb.net/?appName=Cluster0')
+# 1. Configuración básica de CORS (permite todo)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Configuración DB
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://johanvega01_db_user:CmMw8mO4ow2ehjh5 @cluster0.pyavozq.mongodb.net/?appName=Cluster0')
+
+# --- SOLUCIÓN DEFINITIVA CORS ---
+
+# 2. Interceptar TODAS las peticiones OPTIONS antes de que lleguen a las rutas
+# Esto evita el error 404 en el Preflight
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "*")
+        response.headers.add("Access-Control-Allow-Methods", "*")
+        return response
+
+# 3. Inyectar encabezados CORS en TODAS las respuestas (incluso errores 404 o 500)
+@app.after_request
+def add_cors_headers(response):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
+    return response
+
+# --------------------------------
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_jwt():
@@ -28,11 +57,9 @@ def analyze_jwt():
 
     result = {}
     try:
-        # 1. DFA estructura JWT
         dfa = JWTStructureDFA()
         result['estructura_valida'] = dfa.process(jwt_string)
 
-        # 2. Parsing y decodificación
         lexer = JWTlexer()
         parser = JWTParser(lexer)
         components = parser.parse(jwt_string)
@@ -41,8 +68,7 @@ def analyze_jwt():
         result['header'] = header
         result['payload'] = payload
 
-        # 3. Árbol de derivación
-        import io, sys
+        import io
         output = io.StringIO()
         old_stdout = sys.stdout
         sys.stdout = output
@@ -50,13 +76,11 @@ def analyze_jwt():
         sys.stdout = old_stdout
         result['arbol_derivacion'] = output.getvalue()
 
-        # 4. Validación semántica
         semantic = JWTSemanticAnalyzer()
         semantic.analyze(header, payload)
         result['errores'] = semantic.errors
         result['warnings'] = semantic.warnings
 
-        # 5. Verificación de firma
         alg = header.get('alg', 'HS256') if isinstance(header, dict) else 'HS256'
         if secret and alg in ["HS256", "HS384"]:
             result['firma_valida'] = JWTVerifier.verify_signature(jwt_string, secret, alg)
@@ -65,7 +89,6 @@ def analyze_jwt():
         else:
             result['firma_valida'] = "Sin clave para verificar"
 
-        # Guardar en base de datos
         save_result(jwt_string, result)
         return jsonify(result)
         
@@ -84,13 +107,7 @@ def generate_jwt_api():
         return jsonify({'error': 'Header y payload son requeridos'}), 400
 
     try:
-        # Usar PyJWT para generar el token
-        token = jwt.encode(
-            payload, 
-            secret, 
-            algorithm=algorithm, 
-            headers=header
-        )
+        token = jwt.encode(payload, secret, algorithm=algorithm, headers=header)
         return jsonify({'jwt': token})
     except Exception as e:
         return jsonify({'error': f'Error generando JWT: {str(e)}'}), 400
@@ -103,20 +120,7 @@ def get_analysis_history():
     except Exception as e:
         return jsonify({'error': f'Error obteniendo historial: {str(e)}'}), 500
 
-@app.route('/api/history/<record_id>', methods=['DELETE', 'OPTIONS'])
-def delete_analysis_history(record_id):
-    if request.method == 'OPTIONS':
-        # Respond to preflight request
-        return '', 200
-    try:
-        if delete_history_record(record_id):
-            return jsonify({'message': 'Registro de historial eliminado correctamente'}), 200
-        else:
-            return jsonify({'error': 'Registro de historial no encontrado o no se pudo eliminar'}), 404
-    except InvalidId:
-        return jsonify({'error': 'ID de registro inválido'}), 400
-    except Exception as e:
-        return jsonify({'error': f'Error al eliminar registro de historial: {str(e)}'}), 500
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -127,4 +131,5 @@ def health_check():
 
 if __name__ == "__main__":
     init_db()
-    app.run(host='0.0.0.0', port=5000)
+    # Debug=True ayuda a recargar cambios automáticamente
+    app.run(host='0.0.0.0', port=5000, debug=True)
