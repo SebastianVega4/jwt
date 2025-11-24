@@ -6,9 +6,10 @@ from model.semantic import JWTSemanticAnalyzer
 from model.automata import JWTStructureDFA
 from model.crypto import JWTVerifier
 from model.utils import show_tree
-from model.db import init_db, save_result, get_history
+from model.db import init_db, save_result, get_history, delete_history_record # Import delete_history_record
 import jwt  # Asegurar que se importa
 import os
+from bson.errors import InvalidId # Import InvalidId
 
 app = Flask(__name__)
 CORS(app)
@@ -101,6 +102,18 @@ def get_analysis_history():
         return jsonify(history)
     except Exception as e:
         return jsonify({'error': f'Error obteniendo historial: {str(e)}'}), 500
+
+@app.route('/api/history/<record_id>', methods=['DELETE'])
+def delete_analysis_history(record_id):
+    try:
+        if delete_history_record(record_id):
+            return jsonify({'message': 'Registro de historial eliminado correctamente'}), 200
+        else:
+            return jsonify({'error': 'Registro de historial no encontrado o no se pudo eliminar'}), 404
+    except InvalidId:
+        return jsonify({'error': 'ID de registro inválido'}), 400
+    except Exception as e:
+        return jsonify({'error': f'Error al eliminar registro de historial: {str(e)}'}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

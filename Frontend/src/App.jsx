@@ -55,6 +55,29 @@ function App() {
     fetchHistory();
   }, []); // Empty dependency array means this runs once on mount
 
+  // --- Función para eliminar un registro del historial
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este registro?")) {
+      return;
+    }
+    try {
+      const response = await fetch(
+        `https://jwtback.vercel.app/api/history/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (response.ok) {
+        fetchHistory(); // Vuelve a cargar el historial para actualizar la UI
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || "Error al eliminar el registro.");
+      }
+    } catch (e) {
+      alert("No se pudo conectar con el backend para eliminar el registro.");
+    }
+  };
+
   // --- Función de análisis
   const analyzeJWT = async () => {
     setError("");
@@ -476,6 +499,20 @@ function App() {
                   style={{ fontSize: "18px", color: "#555", marginBottom: 10 }}>
                   Análisis #{history.length - index} -{" "}
                   {new Date(record.timestamp).toLocaleString()}
+                  <button
+                    onClick={() => handleDelete(record._id)}
+                    style={{
+                      fontSize: "12px",
+                      background: "#e74c3c",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 4,
+                      padding: "4px 8px",
+                      marginLeft: "10px",
+                      cursor: "pointer",
+                    }}>
+                    Eliminar
+                  </button>
                 </h3>
                 <div style={{ marginBottom: 5 }}>
                   <strong>JWT Analizado:</strong>{" "}
@@ -546,3 +583,4 @@ function App() {
 }
 
 export default App;
+

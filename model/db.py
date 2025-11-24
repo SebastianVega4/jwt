@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from datetime import datetime
 import os
+from bson.objectid import ObjectId # Import ObjectId
 
 # MongoDB connection string from the user
 MONGO_URI = "mongodb+srv://johanvega01_db_user:CmMw8mO4ow2ehjh5@cluster0.pyavozq.mongodb.net/?appName=Cluster0"
@@ -64,5 +65,24 @@ def get_history():
         print(f"Debug: db is None in get_history. Current db: {db}")
         print("Database not initialized. Cannot retrieve history.")
         return []
+
+def delete_history_record(record_id):
+    """Deletes a single JWT analysis record by its ID."""
+    if db is not None:
+        try:
+            history_collection = db.history
+            result = history_collection.delete_one({"_id": ObjectId(record_id)})
+            if result.deleted_count == 1:
+                print(f"Record with ID {record_id} deleted successfully.")
+                return True
+            else:
+                print(f"Record with ID {record_id} not found or not deleted.")
+                return False
+        except Exception as e:
+            print(f"Error deleting record from MongoDB: {e}")
+            return False
+    else:
+        print("Database not initialized. Cannot delete record.")
+        return False
 
 init_db() # Initialize DB when module is imported
